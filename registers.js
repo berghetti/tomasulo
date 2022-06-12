@@ -58,8 +58,6 @@ function set_reg_value ( reg, value )
   if ( -1 == i )
     { console.log (`Register ${reg} not found`); return }
 
-  
-
   REG[i].value = value;
   REG[i].ref = '';
 }

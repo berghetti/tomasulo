@@ -113,14 +113,14 @@ function issue()
 
   let rs_i = get_free_rs( RS[inst.rs_t] )
   if ( -1 == rs_i )
-    { log(`No empty reverve station to issue ${inst.inst}`); return; }
+    { log(`No empty reserve station to issue ${inst.inst}`); return; }
 
   let rob_i = get_free_rob();
   if ( -1 == rob_i )
   { log('No empty rob'); return; }
 
   let rs_entry = new_rs_entry(
-    'S',
+    'Y',
     inst.inst,
     get_reg_value( inst.op2 ), // vj
     get_reg_value( inst.op3 ), // vk
@@ -136,18 +136,18 @@ function issue()
     {
       rs_entry.qj = get_reg_ref ( inst.op2 );
       log( `${rs_entry.op} - Not value available in register ${inst.op2} to usage in 'vj',
-           using refrence ${rs_entry.qj}`);
+           using reference ${rs_entry.qj}`);
     }
 
   if ( '' === rs_entry.vk )
     {
       rs_entry.qk = get_reg_ref ( inst.op3 );
       log( `${rs_entry.op} - Not value available in register ${inst.op3} to usage in 'vk',
-           using refrence ${rs_entry.qk}`);
+           using reference ${rs_entry.qk}`);
     }
 
   let rob_entry = new_rob_entry (
-    'S',
+    'Y',
     inst.inst,
     'I', // issue
   );
@@ -192,7 +192,7 @@ function execute()
         {
           let inst = rs[j];
 
-          if ( inst.busy != 'S' || inst.vj === '' ||
+          if ( inst.busy != 'Y' || inst.vj === '' ||
                inst.vk === '' ||  current_cycle == inst.last_cycle_update )
             continue;
 
@@ -214,7 +214,7 @@ function execute()
               set_rob_state( inst.rob_i, inst.status );
 
               log(
-                `End exec instruction ${inst.op} `);
+                `End exec instruction ${inst.op}`);
             }
         }
     }
@@ -252,7 +252,7 @@ function write()
         {
           let inst = rs[j];
 
-          if ( inst.busy != 'S' || inst.status != 'E' ||
+          if ( inst.busy != 'Y' || inst.status != 'E' ||
                current_cycle == inst.last_cycle_update )
             continue;
 
