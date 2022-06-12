@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+body { background: #ccc; }
+table{
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+th, td{
+  padding: 1px 10px;
+  border: 1px solid black;
+}
+
+button{
+  padding: 20px 40px;
+  margin: auto;
+}
+
+.container { display: flex; margin-top: 50px; }
+.container > .tables { flex-grow: 1;}
+
+.queue > table { margin: auto; }
+
+.middle { display: flex;  justify-content: space-evenly;}
+
+.reg > table { margin: auto; }
+
+.controls { display: flex; margin-top: 50px;}
+.controls > button { margin: auto;}
+
+#log{ width: 500px; max-height: 600px; overflow: auto;}
+
+</style>
+<head>
+  <meta charset="utf-8"/>
+  <title>Tomasulo</title>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="tables">
+
+      <div class="queue">
+        <table id="inst_queue" ><caption> INST_QUEUE </caption> </table>
+      </div>
+
+      </br>
+
+      <div class="middle">
+        <div class="rs">
+          <table id="rs_add" ><caption> RS_ADD </caption> </table>
+          </br>
+          <table id="rs_sub" ><caption> RS_SUB </caption> </table>
+        </div>
+
+        <div class="rob">
+          <table id="t_rob"><caption> ROB </caption> </table>
+        </div>
+      </div>
+
+      </br>
+
+      <div class="reg">
+        <table id="t_reg"><caption> REGISTER </caption> </table>
+      </div>
+
+      <div class="controls">
+        <button type="button" name="button" id="next" onclick="next()">Next</button>
+      </div>
+
+    </div>
+
+    <div class="log_box">
+      <h4> Log </h1>
+      <hr>
+      <div id="log">
+
+      </div>
+    </div>
+
+</div>
+
+<script type="text/javascript" src="table_handle.js" ></script>
+<script type="text/javascript" src="registers.js" ></script>
+<script type="text/javascript" src="instructions.js" ></script>
+<script type="text/javascript" src="reserve_station.js" ></script>
+<script type="text/javascript" src="reorder_buffer.js" ></script>
+<script type="text/javascript" src="log.js" ></script>
+
+
+<script type="text/javascript" >
+
+update_tables();
+
+var current_cycle = 0;
+function update_cycle_instruction( inst )
+{
+  inst.last_cycle_update = current_cycle;
+}
+
+// current queue position
+var current_q = 0;
+
+function issue()
+{
+  if ( 0 == INSTRUCTIONS.length)
+    { log('Empty instruction queue'); return; }
+
+  if ( current_q >= INSTRUCTIONS.length ) return;
+
+  let inst = INSTRUCTIONS[current_q];
+
+  let rs_i = get_free_rs( RS[inst.rs_t] )
+  if ( -1 == rs_i )
+    { log(`No empty reverve station to issue ${inst.inst}`); return; }
+
+  let rob_i = get_free_rob();
+  if ( -1 == rob_i )
+  { log('No empty rob'); return; }
+
+  let rs_entry = new_rs_entry(
+    'S',
+    inst.inst,
+    get_reg_value( inst.op2 ), // vj
+    get_reg_value( inst.op3 ), // vk
+   );
+
+  // inst.last_cycle_update = current_cycle;
+
+  rs_entry.rob_i = rob_i;
+  rs_entry.status = 'I';
+  update_cycle_instruction( rs_entry );
+
+  if ( '' === rs_entry.vj )
+    {
+      rs_entry.qj = get_reg_ref ( inst.op2 );
+      log( `${rs_entry.op} - Not value available in register ${inst.op2} to usage in 'vj',
+           using refrence ${rs_entry.qj}`);
+    }
+
+  if ( '' === rs_entry.vk )
+    {
+      rs_entry.qk = get_reg_ref ( inst.op3 );
+      log( `${rs_entry.op} - Not value available in register ${inst.op3} to usage in 'vk',
+           using refrence ${rs_entry.qk}`);
+    }
+
+  let rob_entry = new_rob_entry (
+    'S',
+    inst.inst,
+    'I', // issue
+  );
+
+  // register destination
+  if ( inst.type == 0 )
+    {
+      rob_entry.destination = inst.op1;
+      set_reg_ref( inst.op1, 'ROB#' + ( rob_i + 1 ) );
+    }
+
+  // input RS and ROB
+  RS[inst.rs_t][rs_i] = rs_entry;
+  set_rob_entry( rob_i, rob_entry );
+
+  INSTRUCTIONS[current_q] = '';
+  current_q++
+
+  log( `Issue instruction ${inst.inst}` );
+}
+
+function execute_inst( i )
+{
+  // get 'SUB' from 'SUB F1, F2, F1'
+  let type = i.op.split(' ')[0];
+  switch (type)
+    {
+      case 'ADD': i.value = i.vj + i.vk; break;
+      case 'SUB': i.value = i.vj - i.vk; break;
+
+      default:
+        log(`Instruction ${type} not implemented`);
+    }
+}
+
+function execute()
+{
+  for (let i = 0; i < RS.length; i++)
+    {
+      let rs = RS[i];
+      for ( let j = 0; j < rs.length; j++ )
+        {
+          let inst = rs[j];
+
+          if ( inst.busy != 'S' || inst.vj === '' ||
+               inst.vk === '' ||  current_cycle == inst.last_cycle_update )
+            continue;
+
+          // log( inst, current_cycle, tmp );
+
+          if ( inst.cycle_exec_started === '' )
+            {
+              inst.cycle_exec_started = current_cycle;
+              log(
+                `Start exec instruction ${inst.op} `);
+            }
+
+          if ( inst.status != 'E' &&
+             ( current_cycle - inst.cycle_exec_started ) >= inst.operation_latency - 1)
+            {
+              inst.status = 'E'
+              execute_inst( inst );
+              update_cycle_instruction( inst );
+              set_rob_state( inst.rob_i, inst.status );
+
+              log(
+                `End exec instruction ${inst.op} `);
+            }
+        }
+    }
+}
+
+function check_cdb( tag, value )
+{
+  for ( let i = 0; i < RS.length; i++ )
+    {
+      let rs = RS[i]
+
+      for (let j = 0; j < rs.length; j++)
+        {
+          if ( rs[j].qj == tag )
+            {
+              rs[j].qj = '';
+              rs[j].vj = value;
+            }
+
+          if ( rs[j].qk == tag )
+            {
+              rs[j].qk = '';
+              rs[j].vk = value;
+            }
+        }
+    }
+}
+
+function write()
+{
+  for ( let i = 0; i < RS.length; i++ )
+    {
+      let rs = RS[i];
+      for ( let j = 0; j < rs.length; j++ )
+        {
+          let inst = rs[j];
+
+          if ( inst.busy != 'S' || inst.status != 'E' ||
+               current_cycle == inst.last_cycle_update )
+            continue;
+
+          // inst.state = 'W'; // unnecessary
+          // update_cycle_instruction( inst );
+
+          set_rob_value( inst.rob_i, inst.value );
+          set_rob_int_cycle( inst.rob_i);
+
+          check_cdb( 'ROB#' + (inst.rob_i + 1), inst.value );
+
+          inst.busy = 'N';
+
+          log(
+            `Write in CDB the instruction ${inst.op}`);
+        }
+    }
+}
+
+function commit()
+{
+  let inst = get_rob_head();
+
+  if ( current_cycle == inst.last_cycle_update ||
+      inst.busy == 'N' ||
+      inst.value === '' )
+    return;
+
+  rob_commit();
+
+  log(
+    `Commited instruction ${inst.op}`);
+}
+
+function next()
+{
+  current_cycle++;
+
+  issue();
+  execute();
+  write();
+  commit();
+
+  update_tables();
+}
+
+</script>
+</body>
+</html>
