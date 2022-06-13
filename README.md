@@ -9,6 +9,7 @@ Simple simulator tomasulo (incomplete)
 
 ### TODO
 
-1 - add more instructions ( today only ADD and SUB );<br/>
-2 - add branch prediction scheme;<br/>
-3 - add memory space to LOAD/STORE instructions;<br/>
+1 - add parser to instructions;</br>
+2 - add more instructions ( today only ADD and SUB );<br/>
+3 - add branch prediction scheme;<br/>
+4 - add memory space to LOAD/STORE instructions;<br/>
