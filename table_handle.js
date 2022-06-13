@@ -46,49 +46,45 @@ function generateTable( table, lines, header, body ) {
 }
 
 function show_rob( rob ){
-  let header = [ '#', 'Busy', 'Instruction', 'Status', 'Destination', 'Value' ]
-  let t_rob = document.getElementById('t_rob');
+  const header = [ '#', 'Busy', 'Instruction', 'Status', 'Destination', 'Value' ]
+  const t_rob = document.getElementById('t_rob');
 
   generateTable( t_rob, rob.length, header, rob );
 }
 
 function show_rs_sub( rs ){
-  let header = [ '#', 'Busy', 'Op', 'Vj', 'Vk', 'Qj', 'Qk', 'A' ]
-  let t_rob = document.getElementById('rs_sub');
+  const header = [ '#', 'Busy', 'Op', 'Vj', 'Vk', 'Qj', 'Qk', 'A' ]
+  const t_rob = document.getElementById('rs_sub');
 
   generateTable( t_rob, rs.length, header, rs );
 }
 
 function show_rs_add( rs ){
-  let header = [ '#', 'Busy', 'Op', 'Vj', 'Vk', 'Qj', 'Qk', 'A' ]
-  let t_rob = document.getElementById('rs_add');
+  const header = [ '#', 'Busy', 'Op', 'Vj', 'Vk', 'Qj', 'Qk', 'A' ]
+  const t_rob = document.getElementById('rs_add');
 
   generateTable( t_rob, rs.length, header, rs );
 }
 
 function show_queue( inst ){
-  let header = [ '#', 'Instruction' ]
-  let t = document.getElementById('inst_queue');
+  const header = [ '#', 'Instruction' ]
+  const t = document.getElementById('inst_queue');
 
   generateTable( t, inst.length, header, inst );
 }
 
 function sho_reg( inst ){
-  let header = [ '#', 'Name', 'Value', 'Ref' ]
-  let t = document.getElementById('t_reg');
+  const header = [ '#', 'Name', 'Value', 'Ref' ]
+  const t = document.getElementById('t_reg');
 
   generateTable( t, inst.length, header, inst );
 }
 
-function update_screen()
+function update_tables()
 {
   show_queue( INSTRUCTIONS );
   show_rs_add( RS_ADD );
   show_rs_sub( RS_SUB );
   show_rob( ROB );
   sho_reg( REG );
-
-
-  const cc = document.getElementById('cc');
-  cc.innerHTML = current_cycle;
 }

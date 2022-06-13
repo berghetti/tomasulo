@@ -62,7 +62,7 @@ button{
       </br>
 
       <div class="reg">
-        <table id="t_reg"><caption> REGISTER </caption> </table>
+        <table id="t_reg"><caption> REGISTERS </caption> </table>
       </div>
 
       <div class="controls">
@@ -121,6 +121,8 @@ function issue()
   if ( -1 == rob_i )
   { log('No empty rob'); return; }
 
+  log( `Issue instruction ${inst.inst}` );
+
   let rs_entry = new_rs_entry(
     'Y',
     inst.inst,
@@ -167,8 +169,6 @@ function issue()
 
   INSTRUCTIONS[current_q] = '';
   current_q++
-
-  log( `Issue instruction ${inst.inst}` );
 }
 
 function execute_inst( i )
@@ -198,13 +198,11 @@ function execute()
                inst.vk === '' ||  current_cycle == inst.last_cycle_update )
             continue;
 
-          // log( inst, current_cycle, tmp );
-
           if ( inst.cycle_exec_started === '' )
             {
               inst.cycle_exec_started = current_cycle;
               log(
-                `Start exec instruction ${inst.op} `);
+                `Start execution instruction ${inst.op} `);
             }
 
           if ( inst.status != 'E' &&
@@ -216,7 +214,7 @@ function execute()
               set_rob_state( inst.rob_i, inst.status );
 
               log(
-                `End exec instruction ${inst.op}`);
+                `End execution instruction ${inst.op}`);
             }
         }
     }
@@ -298,7 +296,7 @@ function next()
   write();
   commit();
 
-  update_screen();
+  update_tables();
 }
 
 function new_entry_step( func, name )
@@ -323,7 +321,7 @@ function step()
     current_cycle++;
 
   steps[step_i].func();
-  update_screen();
+  update_tables();
 
   step_i = ( step_i + 1) % steps.length;
 
@@ -332,7 +330,7 @@ function step()
   btn_step.innerHTML = 'Step ' + steps[step_i].name;
 }
 
-update_screen();
+update_tables();
 
 </script>
 </body>
