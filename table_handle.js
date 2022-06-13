@@ -80,11 +80,15 @@ function sho_reg( inst ){
   generateTable( t, inst.length, header, inst );
 }
 
-function update_tables()
+function update_screen()
 {
   show_queue( INSTRUCTIONS );
   show_rs_add( RS_ADD );
   show_rs_sub( RS_SUB );
   show_rob( ROB );
   sho_reg( REG );
+
+
+  const cc = document.getElementById('cc');
+  cc.innerHTML = current_cycle;
 }

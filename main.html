@@ -66,13 +66,17 @@ button{
       </div>
 
       <div class="controls">
-        <button type="button" name="button" id="next" onclick="next()">Next</button>
+        <button type="button" id="next" onclick="next()">Next</button>
+        <button type="button" id="step" onclick="step()">Step ( issue )</button>
       </div>
 
     </div>
 
     <div class="log_box">
-      <h4> Log </h1>
+      <div style="display: flex; justify-content: space-evenly;">
+        <h4> Log </h1>
+        <h4> Current cycle: <span id="cc"> -</span> </h4>
+      </div>
       <hr>
       <div id="log">
 
@@ -90,8 +94,6 @@ button{
 
 
 <script type="text/javascript" >
-
-update_tables();
 
 var current_cycle = 0;
 function update_cycle_instruction( inst )
@@ -296,8 +298,41 @@ function next()
   write();
   commit();
 
-  update_tables();
+  update_screen();
 }
+
+function new_entry_step( func, name )
+{
+  return {
+    'func' : func,
+    'name' : name,
+  };
+}
+
+const steps = [
+  new_entry_step( issue, '( issue )' ),
+  new_entry_step( execute, '( execute )' ),
+  new_entry_step( write, '( write )' ),
+  new_entry_step( commit, '( commit )' )
+];
+var step_i = 0;
+
+function step()
+{
+  if ( step_i == 0 )
+    current_cycle++;
+
+  steps[step_i].func();
+  update_screen();
+
+  step_i = ( step_i + 1) % steps.length;
+
+  const btn_step = document.getElementById('step');
+
+  btn_step.innerHTML = 'Step ' + steps[step_i].name;
+}
+
+update_screen();
 
 </script>
 </body>
